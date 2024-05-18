@@ -49,9 +49,11 @@ cp dvd.conf /etc/nginx/conf.d
 mkdir /src/root-common
 dnf group -y install "Server with GUI" --installroot=/src/root-common
 
-mkdir -p /src/client1/{work,root} /client1
-
-mount -t overlayfs -o lowerdir=/src/root-common,upperdir=/src/client1/root,workdir=/src/client1/work /client1
-echo ":/client1" >> /etc/exports
-
+for n in $(seq 1 5) ; do
+    mkdir -p /src/client${n}/{work,root} /client${n}
+    #mount -t overlay overlay -o lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work /client${n}
+    echo "overlay /client${n} overlay lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work 0 2
+    echo ":/client${n}" >> /etc/exports
+done
+mount -a
 exportfs -a
