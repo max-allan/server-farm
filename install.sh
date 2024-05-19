@@ -57,7 +57,7 @@ for n in $(seq 1 5) ; do
     mkdir -p /src/client${n}/{work,root} /client${n}
     #mount -t overlay overlay -o  index=on,nfs_export=on,lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work /client${n}
     echo "overlay /client${n} overlay  index=on,nfs_export=on,lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work 0 2" >> /etc/fstab
-    echo "/client${n} 10.9.99.0/24" >> /etc/exports
+    echo "/client${n} 10.99.99.0/24" >> /etc/exports
 done
 mount -a
 exportfs -a
