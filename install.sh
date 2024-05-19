@@ -2,7 +2,10 @@ dnf -y install tftp tftp-server syslinux-tftpboot syslinux dhcp-server nfs-utils
 
 cp dhcpd.conf /etc/dhcp/dhcpd.conf
 IF=$(nmcli -t -f NAME c show --active | grep -v ^lo$)
-IP=$nmcli -t -f IP4.ADDRESS c show $IF | cut -f2 -d: | cut -d/ -f1)
+IP=$nmcli -t -f IP4.ADDRESS c show ${IF} | cut -f2 -d: | cut -d/ -f1)
+# Add 10.99 address for DHCP network
+nmcli con mod ${IF} +ipv4.ADDRESS 10.99.99.0/24
+nmcli con up ${IF}
 
 echo 'INTERFACESv4="'$IF'"' >  /etc/default/isc-dhcp-server
 
