@@ -2,7 +2,7 @@ dnf -y install tftp tftp-server syslinux-tftpboot syslinux dhcp-server nfs-utils
 
 cp dhcpd.conf /etc/dhcp/dhcpd.conf
 IF=$(nmcli -t -f NAME c show --active | grep -v ^lo$)
-IP=$nmcli -t -f IP4.ADDRESS c show ${IF} | cut -f2 -d: | cut -d/ -f1)
+IP=$(nmcli -t -f IP4.ADDRESS c show ${IF} | cut -f2 -d: | cut -d/ -f1)
 # Add 10.99 address for DHCP network
 nmcli con mod ${IF} +ipv4.ADDRESS 10.99.99.0/24
 nmcli con up ${IF}
@@ -34,12 +34,13 @@ label centos9
 # " > /tftpboot/pxelinux.cfg/default
 
 systemctl start tftp
+systemctl start nfs-server
 
 
 mkdir /dvd /src
 curl -Lo /src/centos9.iso 'https://mirrors.centos.org/mirrorlist?path=/9-stream/BaseOS/x86_64/iso/CentOS-Stream-9-latest-x86_64-dvd1.iso&redirect=1&protocol=https'
 
-echo "/src/centos9.iso /dvd/ ro 0 2" >> /etc/fstab
+echo "/src/centos9.iso /dvd/ iso9660 ro 0 2" >> /etc/fstab
 systemctl daemon-reload
 mount -a
 
@@ -54,9 +55,9 @@ dnf group -y install "Server with GUI" --installroot=/src/root-common
 
 for n in $(seq 1 5) ; do
     mkdir -p /src/client${n}/{work,root} /client${n}
-    #mount -t overlay overlay -o lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work /client${n}
-    echo "overlay /client${n} overlay lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work 0 2
-    echo ":/client${n}" >> /etc/exports
+    #mount -t overlay overlay -o  index=on,nfs_export=on,lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work /client${n}
+    echo "overlay /client${n} overlay  index=on,nfs_export=on,lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work 0 2" >> /etc/fstab
+    echo "/client${n} 10.9.99.0/24" >> /etc/exports
 done
 mount -a
 exportfs -a
