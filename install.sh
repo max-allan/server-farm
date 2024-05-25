@@ -4,7 +4,8 @@ cp dhcpd.conf /etc/dhcp/dhcpd.conf
 IF=$(nmcli -t -f NAME c show --active | grep -v ^lo$)
 IP=$(nmcli -t -f IP4.ADDRESS c show ${IF} | cut -f2 -d: | cut -d/ -f1)
 # Add 10.99 address for DHCP network
-nmcli con mod ${IF} +ipv4.ADDRESS 10.99.99.1/24
+IP10=10.99.99.1
+nmcli con mod ${IF} +ipv4.ADDRESS ${IP10}/24
 nmcli con up ${IF}
 
 echo 'INTERFACESv4="'$IF'"' >  /etc/default/isc-dhcp-server
@@ -18,7 +19,7 @@ mkdir /tftpboot/pxelinux.cfg
 echo "default centos9
 label centos9
   kernel images/centos9/vmlinuz
-  append initrd=images/centos9/initrd.img ip=dhcp root=nfs:${IP}:/client1 rw selinux=0
+  append initrd=images/centos9/initrd.img ip=dhcp root=nfs:${IP10}:/client1 rw selinux=0
 " > /tftpboot/pxelinux.cfg/default
 # Do some checking to get the client1's mac address and replace default with 01-mac
 # https://wiki.syslinux.org/wiki/index.php?title=PXELINUX
@@ -31,7 +32,7 @@ label centos9
 #   menu label ^Install system
 #   menu default
 #   kernel images/centos9/vmlinuz
-#   append initrd=images/centos9/initrd.img ip=dhcp inst.repo=http://$IP/centos9/BaseOS/
+#   append initrd=images/centos9/initrd.img ip=dhcp inst.repo=http://${IP10}/centos9/BaseOS/
 # " > /tftpboot/pxelinux.cfg/default
 
 systemctl start tftp
