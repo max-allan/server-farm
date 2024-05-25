@@ -10,6 +10,7 @@ nmcli con up ${IF}
 echo 'INTERFACESv4="'$IF'"' >  /etc/default/isc-dhcp-server
 
 systemctl start dhcpd
+systemctl enable dhcpd
 
 sed -i s+/var/lib/tftpboot+/tftpboot+ /usr/lib/systemd/system/tftp.service
 
@@ -35,12 +36,15 @@ label centos9
 
 systemctl start tftp
 systemctl start nfs-server
+systemctl enable tftp
+systemctl enable nfs-server
+
 
 
 mkdir /dvd /src
 curl -Lo /src/centos9.iso 'https://mirrors.centos.org/mirrorlist?path=/9-stream/BaseOS/x86_64/iso/CentOS-Stream-9-latest-x86_64-dvd1.iso&redirect=1&protocol=https'
 
-echo "/src/centos9.iso /dvd/ iso9660 ro 0 2" >> /etc/fstab
+echo "/src/centos9.iso /dvd/ iso9660 loop,ro 0 2" >> /etc/fstab
 systemctl daemon-reload
 mount -a
 
@@ -57,7 +61,7 @@ for n in $(seq 1 5) ; do
     mkdir -p /src/client${n}/{work,root} /client${n}
     #mount -t overlay overlay -o  index=on,nfs_export=on,lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work /client${n}
     echo "overlay /client${n} overlay  index=on,nfs_export=on,lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work 0 0" >> /etc/fstab
-    echo "/client${n} 10.99.99.0/24" >> /etc/exports
+    echo "/client${n} 10.99.99.0/24(sync)" >> /etc/exports
 done
 mount -a
 exportfs -a
