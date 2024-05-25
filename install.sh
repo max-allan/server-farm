@@ -61,18 +61,22 @@ cp /dvd/images/pxeboot/{vmlinuz,initrd.img} /tftpboot/images/centos9
 
 cp dvd.conf /etc/nginx/conf.d
 
-
-mkdir /src/root-common
+ROOT=/src/root-k8s
+mkdir ${ROOT}
 
 # Add this to DNF to only use local repo: --repofrompath dvd,/dvd/BaseOS --repo dvd  
 
+cp kubernetes.repo ${ROOT}/etc/yum.repos.d
 
-dnf --repofrompath dvd,/dvd/BaseOS --repo dvd group -y install "Server with GUI" --installroot=/src/root-common
-
+dnf --repofrompath dvd,/dvd/BaseOS --nogpgcheck  --repo dvd group -y install "Minimal install" --installroot=${ROOT}
+dnf  -y install centos-release-okd-4.16 --installroot=${ROOT}
+dnf  -y install cri-o cri-tools --installroot=${ROOT}
+# https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+dnf  -y install kubelet kubeadm kubectl --disableexcludes=kubernetes --installroot=${ROOT}
 for n in $(seq 1 5) ; do
     mkdir -p /src/client${n}/{work,root} /client${n}
-    #mount -t overlay overlay -o  index=on,nfs_export=on,lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work /client${n}
-    echo "overlay /client${n} overlay  index=on,nfs_export=on,lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work 0 0" >> /etc/fstab
+    #mount -t overlay overlay -o  index=on,nfs_export=on,lowerdir=${ROOT},upperdir=/src/client${n}/root,workdir=/src/client${n}/work /client${n}
+    echo "overlay /client${n} overlay  index=on,nfs_export=on,lowerdir=${ROOT},upperdir=/src/client${n}/root,workdir=/src/client${n}/work 0 0" >> /etc/fstab
     echo "/client${n} 1${SUBNET}(rw,no_root_squash)" >> /etc/exports
 done
 mount -a
