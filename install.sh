@@ -40,6 +40,9 @@ systemctl start nfs-server
 systemctl enable tftp
 systemctl enable nfs-server
 
+firewall-cmd --add-service=tftp
+firewall-cmd --add-service=nfs
+firewall-cmd --runtime-to-permanent
 
 
 mkdir /dvd /src
@@ -49,7 +52,7 @@ echo "/src/centos9.iso /dvd/ iso9660 loop,ro 0 2" >> /etc/fstab
 systemctl daemon-reload
 mount -a
 
-mkdir /tftpboot/images/centos9
+mkdir -p /tftpboot/images/centos9
 cp /dvd/images/pxeboot/{vmlinuz,initrd.img} /tftpboot/images/centos9
 
 cp dvd.conf /etc/nginx/conf.d
