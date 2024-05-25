@@ -63,7 +63,11 @@ cp dvd.conf /etc/nginx/conf.d
 
 
 mkdir /src/root-common
-dnf group -y install "Server with GUI" --installroot=/src/root-common
+
+# Add this to DNF to only use local repo: --repofrompath dvd,/dvd/BaseOS --repo dvd  
+
+
+dnf --repofrompath dvd,/dvd/BaseOS --repo dvd group -y install "Server with GUI" --installroot=/src/root-common
 
 for n in $(seq 1 5) ; do
     mkdir -p /src/client${n}/{work,root} /client${n}
