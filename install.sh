@@ -66,13 +66,28 @@ mkdir ${ROOT}
 
 # Add this to DNF to only use local repo: --repofrompath dvd,/dvd/BaseOS --repo dvd  
 
+#Manager node
+dnf --repofrompath dvd,/dvd/BaseOS --nogpgcheck --repo dvd group -y install "Minimal install" --installroot=${ROOT}
+# needed in mgr if control plane is different
+#dnf -y install nginx nginx-mod-stream --installroot=${ROOT}
+# cp k8s-proxy.conf ${ROOT}/etc/nginx/sites.d # NOT tested - needs IP change in config
+# ln -s /usr/lib/systemd/system/nginx.service ${ROOT}/etc/systemd/system/multi-user.target.wants/nginx.service  
+
+# All nodes
 cp kubernetes.repo ${ROOT}/etc/yum.repos.d
 
-dnf --repofrompath dvd,/dvd/BaseOS --nogpgcheck  --repo dvd group -y install "Minimal install" --installroot=${ROOT}
 dnf  -y install centos-release-okd-4.16 --installroot=${ROOT}
 dnf  -y install cri-o cri-tools --installroot=${ROOT}
 # https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
 dnf  -y install kubelet kubeadm kubectl --disableexcludes=kubernetes --installroot=${ROOT}
+
+cp 99-k8s-cri.conf ${ROOT}/etc/sysctl.d
+
+ln -s /usr/lib/systemd/system/crio.service ${ROOT}/etc/systemd/system/multi-user.target.wants/crio.service  
+ln -s /usr/lib/systemd/system/kubelet.service ${ROOT}/etc/systemd/system/multi-user.target.wants/kubelet.service  
+
+rm /src/root-k8s/etc/systemd/system/multi-user.target.wants/firewalld.service
+
 for n in $(seq 1 5) ; do
     mkdir -p /src/client${n}/{work,root} /client${n}
     #mount -t overlay overlay -o  index=on,nfs_export=on,lowerdir=${ROOT},upperdir=/src/client${n}/root,workdir=/src/client${n}/work /client${n}
