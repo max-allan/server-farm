@@ -46,6 +46,8 @@ systemctl enable --now nfs-server
 
 firewall-cmd --add-service=tftp
 firewall-cmd --add-service=nfs
+firewall-cmd --add-service=http
+
 firewall-cmd --runtime-to-permanent
 
 
@@ -59,6 +61,7 @@ mount -a
 mkdir -p /tftpboot/images/centos9
 cp /dvd/images/pxeboot/{vmlinuz,initrd.img} /tftpboot/images/centos9
 
+ln -s /dvd  /usr/share/nginx/html/dvd
 cp dvd.conf /etc/nginx/conf.d
 
 
@@ -75,5 +78,16 @@ for n in $(seq 1 5) ; do
     echo "overlay /client${n} overlay  index=on,nfs_export=on,lowerdir=/src/root-common,upperdir=/src/client${n}/root,workdir=/src/client${n}/work 0 0" >> /etc/fstab
     echo "/client${n} 1${SUBNET}(rw,no_root_squash)" >> /etc/exports
 done
+echo "/dvd :(ro) >> /etc/exports
+systemctl enable --now nginx
+
 mount -a
 exportfs -a
+
+# Setup kickstart configs
+mkdir -p /usr/share/nginx/html/ks
+cp client1.cfg /usr/share/nginx/html/ks
+chmod -R a+rx /usr/share/nginx/html
+
+
+# some sort of firewalld glitch sunrpc port.
